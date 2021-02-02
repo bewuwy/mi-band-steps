@@ -3,6 +3,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from os.path import exists
 from time import time_ns
 from datetime import datetime, timedelta
+import plotly.graph_objects as go
 import requests
 import pickle
 
@@ -28,25 +29,22 @@ r = requests.get("https://fitness.googleapis.com/fitness/v1/users/me/dataSources
 
 data_sources = r.json()
 
-dataStream = None
+dataStreamId = None
 for i in data_sources["dataSource"]:
     if i['dataStreamId'] == "raw:com.google.step_count.delta:com.xiaomi.hm.health:":
-        dataStream = i
+        dataStreamId = i['dataStreamId']
         break
-if dataStream is None:
+if dataStreamId is None:
     print("could not find the dataStream")
     quit()
 
-dataStreamId = dataStream["dataStreamId"]
 
 now = datetime.today()
 week = datetime(now.year, now.month, now.day, now.hour, now.minute) - timedelta(days=7)
 week = int((week-datetime(1970, 1, 1)).total_seconds() * (10**9))
 now = int(time_ns())
 
-# dataset
 datasetId = f"{str(week)}-{str(now)}"
-
 r = requests.get(f"https://fitness.googleapis.com/fitness/v1/users/me/dataSources/{dataStreamId}/datasets/{datasetId}",
                  headers=headers)
 steps = r.json()
@@ -57,12 +55,18 @@ for i in steps["point"]:
     # stop = (datetime.fromtimestamp(int(i["endTimeNanos"])/(10**9)))
     value = i["value"][0]["intVal"]
 
-    if start.date() in steps_dict:
-        steps_dict[start.date()] += value
+    if str(start.date()) in steps_dict:
+        steps_dict[str(start.date())] += value
     else:
-        steps_dict[start.date()] = value
+        steps_dict[str(start.date())] = value
     # print(f"{start} - {stop} -> {value}")
 
 print(steps_dict, end="\n"*2)
 for i in steps_dict:
     print(f"{i} -> {steps_dict[i]}")
+
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=list(steps_dict.keys()), y=list(steps_dict.values()), name="steps"))
+fig.update_layout(title="daily steps", xaxis_title="date", yaxis_title="steps")
+fig.show()
