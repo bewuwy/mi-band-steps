@@ -15,14 +15,18 @@ creds = None
 if exists('token/token.pickle'):
     with open('token/token.pickle', 'rb') as token:
         creds = pickle.load(token)
+        print("loaded authorization token from file")
 if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
+        print("refreshed token")
     else:
         flow = InstalledAppFlow.from_client_secrets_file('token/credentials.json', scopes)
         creds = flow.run_local_server()
+        print("authorized!")
     with open('token/token.pickle', 'wb') as token:
         pickle.dump(creds, token)
+        print("saved authorization token to file")
 
 headers = {"Authorization": f"Bearer {creds.token}", "Content-Type": "application/json;encoding=utf-8"}
 r = requests.get("https://fitness.googleapis.com/fitness/v1/users/me/dataSources", headers=headers)
@@ -35,7 +39,7 @@ for i in data_sources["dataSource"]:
         dataStreamId = i['dataStreamId']
         break
 if dataStreamId is None:
-    print("could not find the dataStream")
+    print("could not find the mi band dataStream")
     quit()
 
 end = datetime.today()
@@ -47,10 +51,17 @@ datasetId = f"{str(start)}-{str(end)}"
 r = requests.get(f"https://fitness.googleapis.com/fitness/v1/users/me/dataSources/{dataStreamId}/datasets/{datasetId}",
                  headers=headers)
 steps = r.json()
+if r.status_code != 200:
+    print("error when trying to fetch data!")
+    print(r.status_code)
+    print(r.content)
+    quit()
+print("fetched data from google fit")
 
 if exists("data.json"):
     with open("data.json", "r") as f:
         steps_data = json.load(f)
+    print("loaded data from file")
 else:
     steps_data = {}
 
@@ -76,12 +87,12 @@ for i in steps["point"]:
     steps_data[year][month][day] += value
 
 this_month = steps_data[str(datetime.now().year)][str(datetime.now().month)]
-print(this_month, end="\n" * 2)
 for i in this_month:
-    print(f"{i} -> {this_month[i]}")
+    print(f"{i}: {this_month[i]}")
 
 with open("data.json", "w") as f:
     json.dump(steps_data, f, indent=4)
+print("saved new data to file")
 
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=list(this_month.keys()), y=list(this_month.values())))
@@ -93,3 +104,4 @@ if not exists(f"exports/{str(datetime.now().year)}"):
     mkdir(f"exports/{str(datetime.now().year)}")
 
 fig.write_html(f"exports/{str(datetime.now().year)}/{str(datetime.now().month)}.html")
+print(f"exported monthly line chart to exports/{str(datetime.now().year)}/{str(datetime.now().month)}.html")
