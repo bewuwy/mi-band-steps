@@ -1,6 +1,7 @@
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from os.path import exists
+from os import mkdir
 from time import time_ns
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
@@ -83,6 +84,12 @@ with open("data.json", "w") as f:
     json.dump(steps_data, f, indent=4)
 
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=list(this_month.keys()), y=list(this_month.values()), name="steps"))
-fig.update_layout(title="daily steps", xaxis_title="date", yaxis_title="steps")
-fig.show()
+fig.add_trace(go.Scatter(x=list(this_month.keys()), y=list(this_month.values())))
+fig.update_layout(title="daily steps", xaxis_title="day", yaxis_title="steps")
+
+if not exists("exports"):
+    mkdir("exports")
+if not exists(f"exports/{str(datetime.now().year)}"):
+    mkdir(f"exports/{str(datetime.now().year)}")
+
+fig.write_html(f"exports/{str(datetime.now().year)}/{str(datetime.now().month)}.html")
