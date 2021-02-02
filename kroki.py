@@ -39,7 +39,7 @@ if dataStream is None:
 
 dataStreamId = dataStream["dataStreamId"]
 
-now = datetime.utcnow()
+now = datetime.today()
 week = datetime(now.year, now.month, now.day, now.hour, now.minute) - timedelta(days=7)
 week = int((week-datetime(1970, 1, 1)).total_seconds() * (10**9))
 now = int(time_ns())
@@ -51,6 +51,18 @@ r = requests.get(f"https://fitness.googleapis.com/fitness/v1/users/me/dataSource
                  headers=headers)
 steps = r.json()
 
-print(steps)
+steps_dict = {}
 for i in steps["point"]:
-    print(i)
+    start = (datetime.fromtimestamp(int(i["startTimeNanos"])/(10**9)))
+    # stop = (datetime.fromtimestamp(int(i["endTimeNanos"])/(10**9)))
+    value = i["value"][0]["intVal"]
+
+    if start.date() in steps_dict:
+        steps_dict[start.date()] += value
+    else:
+        steps_dict[start.date()] = value
+    # print(f"{start} - {stop} -> {value}")
+
+print(steps_dict, end="\n"*2)
+for i in steps_dict:
+    print(f"{i} -> {steps_dict[i]}")
