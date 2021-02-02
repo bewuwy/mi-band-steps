@@ -3,7 +3,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from os.path import exists
 from time import time_ns
 from datetime import datetime, timedelta
-# from json import dumps
 import requests
 import pickle
 
@@ -42,27 +41,11 @@ dataStreamId = dataStream["dataStreamId"]
 
 now = datetime.utcnow()
 week = datetime(now.year, now.month, now.day, now.hour, now.minute) - timedelta(days=7)
-week = int((week-datetime(1970, 1, 1)).total_seconds() * (10**4))
-now = int(time_ns() / (10**5))
-
-# # aggregate
-# body = dumps({"aggregateBy": [
-#              {"dataTypeName": "com.google.step_count.delta",
-#               "dataSourceId": dataStreamId}],
-#               "bucketByTime": {"durationMillis": 86400000},
-#               "startTimeMillis": week, "endTimeMillis": now})
-#
-# r = requests.post("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", headers=headers, data=body)
-#
-# steps = r.json()
-# for i in steps["bucket"]:
-#     print(i)
-#
-# print("\n\n\n")
-
+week = int((week-datetime(1970, 1, 1)).total_seconds() * (10**9))
+now = int(time_ns())
 
 # dataset
-datasetId = f"{str(week*(10**5))}-{str(now*(10**5))}"
+datasetId = f"{str(week)}-{str(now)}"
 
 r = requests.get(f"https://fitness.googleapis.com/fitness/v1/users/me/dataSources/{dataStreamId}/datasets/{datasetId}",
                  headers=headers)
