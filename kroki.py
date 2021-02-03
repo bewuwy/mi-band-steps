@@ -9,6 +9,8 @@ import json
 import requests
 import pickle
 
+
+# authorization
 scopes = ['https://www.googleapis.com/auth/fitness.activity.read']
 creds = None
 
@@ -29,19 +31,24 @@ if not creds or not creds.valid:
         print("saved authorization token to file")
 
 headers = {"Authorization": f"Bearer {creds.token}", "Content-Type": "application/json;encoding=utf-8"}
-r = requests.get("https://fitness.googleapis.com/fitness/v1/users/me/dataSources", headers=headers)
 
+
+# get dataSource
+r = requests.get("https://fitness.googleapis.com/fitness/v1/users/me/dataSources", headers=headers)
 data_sources = r.json()
 
 dataStreamId = None
 for i in data_sources["dataSource"]:
     if i['dataStreamId'] == "raw:com.google.step_count.delta:com.xiaomi.hm.health:":
+        # get xiaomi mi band dataStream
         dataStreamId = i['dataStreamId']
         break
 if dataStreamId is None:
     print("could not find the mi band dataStream")
     quit()
 
+
+# get dataset
 end = datetime.today()
 start = datetime(end.year, end.month, end.day, end.hour, end.minute) - timedelta(days=7)
 start = int((start - datetime(1970, 1, 1)).total_seconds() * (10 ** 9))
@@ -58,12 +65,28 @@ if r.status_code != 200:
     quit()
 print("fetched data from google fit")
 
+
+# load data.json
 if exists("data.json"):
     with open("data.json", "r") as f:
         steps_data = json.load(f)
     print("loaded data from file")
 else:
     steps_data = {}
+
+
+# count steps
+skip = []
+for i in steps["point"]:
+    start = (datetime.fromtimestamp(int(i["startTimeNanos"]) / (10 ** 9))).date()
+    year = str(start.year)
+    month = str(start.month)
+    day = str(start.day)
+
+    if year in steps_data and month in steps_data[year] and day in steps_data[year][month] \
+            and start != datetime.now().date():
+        # skip days that are not today and are already saved
+        skip.append(start)
 
 for i in steps["point"]:
     start = (datetime.fromtimestamp(int(i["startTimeNanos"]) / (10 ** 9))).date()
@@ -75,18 +98,27 @@ for i in steps["point"]:
         steps_data[year] = {}
     if month not in steps_data[year]:
         steps_data[year][month] = {}
+    if start not in skip:
+        steps_data[year][month][day] = 0
+        # set days to be counted again to 0 to avoid doubling values
 
-    steps_data[year][month][day] = 0
+this_month = steps_data[str(datetime.now().year)][str(datetime.now().month)]
 for i in steps["point"]:
-    start = (datetime.fromtimestamp(int(i["startTimeNanos"]) / (10 ** 9)))
+    start = (datetime.fromtimestamp(int(i["startTimeNanos"]) / (10 ** 9))).date()
+    end = (datetime.fromtimestamp(int(i["endTimeNanos"]) / (10 ** 9)))
+
     year = str(start.year)
     month = str(start.month)
     day = str(start.day)
     value = i["value"][0]["intVal"]
 
-    steps_data[year][month][day] += value
+    print(f"{start} - {end} -> {value}")
+    if start not in skip:
+        steps_data[year][month][day] += value
+        # adding value if the date is not skipped
 
-this_month = steps_data[str(datetime.now().year)][str(datetime.now().month)]
+
+# save new data
 for i in this_month:
     print(f"{i}: {this_month[i]}")
 
@@ -94,6 +126,8 @@ with open("data.json", "w") as f:
     json.dump(steps_data, f, indent=4)
 print("saved new data to file")
 
+
+# create monthly line chart
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=list(this_month.keys()), y=list(this_month.values())))
 fig.update_layout(title="daily steps", xaxis_title="day", yaxis_title="steps")
