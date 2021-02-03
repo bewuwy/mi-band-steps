@@ -5,6 +5,7 @@ from os import mkdir
 from time import time_ns
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
+import subprocess
 import json
 import requests
 import pickle
@@ -139,3 +140,18 @@ if not exists(f"exports/{str(datetime.now().year)}"):
 
 fig.write_html(f"exports/{str(datetime.now().year)}/{str(datetime.now().month)}.html")
 print(f"exported monthly line chart to exports/{str(datetime.now().year)}/{str(datetime.now().month)}.html")
+
+
+# push the pages repo
+p = subprocess.Popen(["git", "add", "."], cwd="exports")
+p.wait()
+p.kill()
+
+p = subprocess.Popen(["git", "commit", "-am", f"{datetime.now().date()} auto update"], cwd="exports")
+p.wait()
+p.kill()
+
+p = subprocess.Popen(["git", "push"], cwd="exports")
+p.wait()
+p.kill()
+print("\npushed pages repo")
