@@ -150,8 +150,8 @@ with open(f"exports/{str(datetime.now().year)}/{str(datetime.now().month)}.json"
 
 
 # push the pages repo if run with --push
-if "--push" in argv:
-    if diff:
+if "--push" in argv or "-p" in argv or "--forcepush" in argv or "-fp" in argv:
+    if diff or "--forcepush" in argv or "-fp" in argv:
         p = subprocess.Popen(["git", "add", "."], cwd="exports")
         p.wait()
         p.kill()
@@ -165,4 +165,4 @@ if "--push" in argv:
         p.kill()
         print("\npushed pages repo")
     else:
-        print("no differences, skipping pushing pages")
+        print("no differences, skipping pages push")
