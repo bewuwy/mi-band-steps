@@ -122,7 +122,7 @@ print("saved new data to file")
 # create monthly line chart
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=list(this_month.keys()), y=list(this_month.values())))
-fig.update_layout(title="daily steps", xaxis_title="day", yaxis_title="steps")
+fig.update_layout(title="daily steps", xaxis_title="day", yaxis_title="steps", template="plotly_dark")
 
 if not exists("exports"):
     mkdir("exports")
