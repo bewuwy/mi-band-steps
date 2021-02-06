@@ -4,6 +4,7 @@ from os.path import exists
 from os import mkdir
 from time import time_ns
 from datetime import datetime, timedelta
+from sys import argv
 import plotly.graph_objects as go
 import subprocess
 import json
@@ -58,7 +59,7 @@ end = int(time_ns())
 datasetId = f"{str(start)}-{str(end)}"
 r = requests.get(f"https://fitness.googleapis.com/fitness/v1/users/me/dataSources/{dataStreamId}/datasets/{datasetId}",
                  headers=headers)
-steps = r.json()
+steps_response = r.json()
 if r.status_code != 200:
     print("error when trying to fetch data!")
     print(r.status_code)
@@ -77,49 +78,39 @@ else:
 
 
 # count steps
-skip = []
-for i in steps["point"]:
-    start = (datetime.fromtimestamp(int(i["startTimeNanos"]) / (10 ** 9))).date()
-    year = str(start.year)
-    month = str(start.month)
-    day = str(start.day)
+steps = {}
+for i in steps_response["point"]:
+    start = datetime.fromtimestamp(int(i["startTimeNanos"]) / (10 ** 9))
+    end = datetime.fromtimestamp(int(i["endTimeNanos"]) / (10 ** 9))
 
-    if year in steps_data and month in steps_data[year] and day in steps_data[year][month] \
-            and start != datetime.now().date():
-        # skip days that are not today and are already saved
-        skip.append(start)
-
-for i in steps["point"]:
-    start = (datetime.fromtimestamp(int(i["startTimeNanos"]) / (10 ** 9))).date()
-    year = str(start.year)
-    month = str(start.month)
-    day = str(start.day)
-
-    if year not in steps_data:
-        steps_data[year] = {}
-    if month not in steps_data[year]:
-        steps_data[year][month] = {}
-    if start not in skip:
-        steps_data[year][month][day] = 0
-        # set days to be counted again to 0 to avoid doubling values
-
-this_month = steps_data[str(datetime.now().year)][str(datetime.now().month)]
-for i in steps["point"]:
-    start = (datetime.fromtimestamp(int(i["startTimeNanos"]) / (10 ** 9))).date()
-    end = (datetime.fromtimestamp(int(i["endTimeNanos"]) / (10 ** 9)))
-
-    year = str(start.year)
-    month = str(start.month)
-    day = str(start.day)
     value = i["value"][0]["intVal"]
 
     print(f"{start} - {end} -> {value}")
-    if start not in skip:
-        steps_data[year][month][day] += value
-        # adding value if the date is not skipped
+
+    if start not in steps:
+        steps[start] = value
+    else:
+        steps[start] += value
 
 
 # save new data
+for i in steps:
+    if not str(i.year) in steps_data:
+        steps_data[str(i.year)] = {}
+    if not str(i.month) in steps_data[str(i.year)]:
+        steps_data[str(i.year)][str(i.month)] = {}
+    if not str(i.day) in steps_data[str(i.year)][str(i.month)]:
+        steps_data[str(i.year)][str(i.month)][str(i.day)] = 0
+
+    if steps[i] > steps_data[str(i.year)][str(i.month)][str(i.day)]:
+        steps_data[str(i.year)][str(i.month)][str(i.day)] = steps[i]
+        # update data only if it's higher
+
+if (datetime.now() + timedelta(days=1)).month == datetime.now().month:
+    steps_data[str(datetime.now().year)][str(datetime.now().month)][str(datetime.now().day + 1)] = 0
+    # setting next day to 0 for better scale
+
+this_month = steps_data[str(datetime.now().year)][str(datetime.now().month)]
 for i in this_month:
     print(f"{i}: {this_month[i]}")
 
@@ -142,16 +133,17 @@ fig.write_html(f"exports/{str(datetime.now().year)}/{str(datetime.now().month)}.
 print(f"exported monthly line chart to exports/{str(datetime.now().year)}/{str(datetime.now().month)}.html")
 
 
-# push the pages repo
-p = subprocess.Popen(["git", "add", "."], cwd="exports")
-p.wait()
-p.kill()
+# push the pages repo if run with --push
+if "--push" in argv:
+    p = subprocess.Popen(["git", "add", "."], cwd="exports")
+    p.wait()
+    p.kill()
 
-p = subprocess.Popen(["git", "commit", "-am", f"{datetime.now().date()} auto update"], cwd="exports")
-p.wait()
-p.kill()
+    p = subprocess.Popen(["git", "commit", "-am", f"{datetime.now().date()} auto update"], cwd="exports")
+    p.wait()
+    p.kill()
 
-p = subprocess.Popen(["git", "push"], cwd="exports")
-p.wait()
-p.kill()
-print("\npushed pages repo")
+    p = subprocess.Popen(["git", "push"], cwd="exports")
+    p.wait()
+    p.kill()
+    print("\npushed pages repo")
