@@ -133,17 +133,36 @@ fig.write_html(f"exports/{str(datetime.now().year)}/{str(datetime.now().month)}.
 print(f"exported monthly line chart to exports/{str(datetime.now().year)}/{str(datetime.now().month)}.html")
 
 
+# export this month data to json
+if exists(f"exports/{str(datetime.now().year)}/{str(datetime.now().month)}.json"):
+    with open(f"exports/{str(datetime.now().year)}/{str(datetime.now().month)}.json", "r") as f:
+        this_month_old = dict(json.load(f))
+else:
+    this_month_old = {}
+if this_month == this_month_old:
+    diff = False
+else:
+    diff = True
+
+with open(f"exports/{str(datetime.now().year)}/{str(datetime.now().month)}.json", "w") as f:
+    json.dump(this_month, f, indent=4)
+    print(f"exported this month data to exports/{str(datetime.now().year)}/{str(datetime.now().month)}.json")
+
+
 # push the pages repo if run with --push
 if "--push" in argv:
-    p = subprocess.Popen(["git", "add", "."], cwd="exports")
-    p.wait()
-    p.kill()
+    if diff:
+        p = subprocess.Popen(["git", "add", "."], cwd="exports")
+        p.wait()
+        p.kill()
 
-    p = subprocess.Popen(["git", "commit", "-am", f"{datetime.now().date()} auto update"], cwd="exports")
-    p.wait()
-    p.kill()
+        p = subprocess.Popen(["git", "commit", "-am", f"{datetime.now().date()} auto update"], cwd="exports")
+        p.wait()
+        p.kill()
 
-    p = subprocess.Popen(["git", "push"], cwd="exports")
-    p.wait()
-    p.kill()
-    print("\npushed pages repo")
+        p = subprocess.Popen(["git", "push"], cwd="exports")
+        p.wait()
+        p.kill()
+        print("\npushed pages repo")
+    else:
+        print("no differences, skipping pushing pages")
