@@ -50,11 +50,29 @@ if dataStreamId is None:
     quit()
 
 
-# get dataset
+# aggregate test
 end = datetime.today()
 start = datetime(end.year, end.month, end.day, end.hour, end.minute) - timedelta(days=7)
 start = int((start - datetime(1970, 1, 1)).total_seconds() * (10 ** 9))
 end = int(time_ns())
+
+# print(int(start/(10**6)))
+#
+# body = {"aggregateBy": [{"dataTypeName": "com.google.step_count.delta", "dataSourceId": "derived:com.google.step_count.delta:com.google.android.gms:estimated_steps"}],
+#         "bucketByTime": {"durationMillis": 86400000},
+#         "startTimeMillis": int(start/(10**6)), "endTimeMillis": int(end/(10**6))}
+# body = json.dumps(body)
+#
+# r = requests.post("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", data=body, headers=headers)
+# r = r.json()
+#
+# print(r)
+# for i in r["bucket"]:
+#     print(i)
+# quit()
+
+
+# get dataset
 
 datasetId = f"{str(start)}-{str(end)}"
 r = requests.get(f"https://fitness.googleapis.com/fitness/v1/users/me/dataSources/{dataStreamId}/datasets/{datasetId}",
@@ -149,7 +167,7 @@ with open(f"exports/{str(datetime.now().year)}/{str(datetime.now().month)}.json"
     print(f"exported this month data to exports/{str(datetime.now().year)}/{str(datetime.now().month)}.json")
 
 
-# push the pages repo if run with --push
+# push the pages repository
 if "--push" in argv or "-p" in argv or "--forcepush" in argv or "-fp" in argv:
     if diff or "--forcepush" in argv or "-fp" in argv:
         p = subprocess.Popen(["git", "add", "."], cwd="exports")
