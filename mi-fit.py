@@ -106,6 +106,16 @@ else:
     print("no saved data found, using empty dict")
 
 
+# add year and month if not in steps data
+year = str(datetime.datetime.now().year)
+month = str(datetime.datetime.now().month)
+
+if year not in steps_data:
+    steps_data[year] = {month: {}}
+elif month not in steps_data[year]:
+    steps_data[year][month] = {}
+
+
 # get steps data
 for i in r["data"]:
     bs64_data = i["summary"]
@@ -114,8 +124,11 @@ for i in r["data"]:
     steps_total = steps["ttl"]
     steps_distance = steps["dis"]
     date = (datetime.datetime.strptime(i["date_time"], "%Y-%m-%d")).date()
+    year = str(date.year)
+    month = str(date.month)
+    day = str(date.day)
 
-    steps_data[str(date)] = {"num": steps_total, "dis": steps_distance}
+    steps_data[year][month][day] = {"num": steps_total, "dis": steps_distance}
     print(f"\n{date}")
     print(f"{steps_total} steps")
     print(f"{steps_distance} m")
