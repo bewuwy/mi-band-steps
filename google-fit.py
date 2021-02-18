@@ -16,8 +16,8 @@ import pickle
 scopes = ['https://www.googleapis.com/auth/fitness.activity.read']
 creds = None
 
-if exists('token/token.pickle'):
-    with open('token/token.pickle', 'rb') as token:
+if exists('token/google-token.pickle'):
+    with open('token/google-token.pickle', 'rb') as token:
         creds = pickle.load(token)
         print("loaded authorization token from file")
 if not creds or not creds.valid:
@@ -25,10 +25,10 @@ if not creds or not creds.valid:
         creds.refresh(Request())
         print("refreshed token")
     else:
-        flow = InstalledAppFlow.from_client_secrets_file('token/credentials.json', scopes)
+        flow = InstalledAppFlow.from_client_secrets_file('token/google-credentials.json', scopes)
         creds = flow.run_local_server()
         print("authorized!")
-    with open('token/token.pickle', 'wb') as token:
+    with open('token/google-token.pickle', 'wb') as token:
         pickle.dump(creds, token)
         print("saved authorization token to file")
 
@@ -87,8 +87,9 @@ print("fetched data from google fit")
 
 
 # load data.json
-if exists("data.json"):
-    with open("data.json", "r") as f:
+jsonFile = "data/google-fit.json"
+if exists(jsonFile):
+    with open(jsonFile, "r") as f:
         steps_data = json.load(f)
     print("loaded data from file")
 else:
@@ -132,7 +133,7 @@ this_month = steps_data[str(datetime.now().year)][str(datetime.now().month)]
 for i in this_month:
     print(f"{i}: {this_month[i]}")
 
-with open("data.json", "w") as f:
+with open(jsonFile, "w") as f:
     json.dump(steps_data, f, indent=4)
 print("saved new data to file")
 
