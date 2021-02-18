@@ -18,13 +18,14 @@ def main(email, password):
     r = f"https://api-user.huami.com/registrations/{email}/tokens"
     r = requests.post(r, data=body, allow_redirects=False)
 
-    r = r.headers.get("Location")
-    if r is None:
-        print("wrong credentials!")
+    r_location = r.headers.get("Location")
+    if r_location is None:
+        print("unknown mifit api error!")
         print("quitting!")
+        print(r.headers)
         quit(1)
 
-    r = r.split("?")[1].split("&")
+    r = r_location.split("?")[1].split("&")
 
     r_dict = {}
     for i in r:
