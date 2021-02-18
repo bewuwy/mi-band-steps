@@ -1,5 +1,6 @@
 .idea
 token
+data
+exports
 __pycache_
 data.json
-exports

@@ -1,6 +1,9 @@
 import requests
 from os import environ
+from os.path import exists
+from shutil import copy2
 import datetime
+import time
 import base64
 import json
 
@@ -82,8 +85,28 @@ if r.status_code != 200:
 
 r = r.json()
 
+
+# load from json file
+jsonFile = "data/mi-fit.json"
+if exists(jsonFile):
+    with open(jsonFile, "r") as f:
+        try:
+            steps_data = dict(json.load(f))
+            print(f"loaded steps data from {jsonFile}")
+        except Exception as e:
+            print("couldn't load json file")
+            print(e)
+            errorFile = f"{jsonFile}.error{time.time()}.json"
+            copy2(jsonFile, errorFile)
+            print(f"copied the file to {errorFile}!")
+            steps_data = {}
+            print("using empty dict")
+else:
+    steps_data = {}
+    print("no saved data found, using empty dict")
+
+
 # get steps data
-steps_data = {}
 for i in r["data"]:
     bs64_data = i["summary"]
     data = json.loads(base64.b64decode(bs64_data))
@@ -92,10 +115,15 @@ for i in r["data"]:
     steps_distance = steps["dis"]
     date = (datetime.datetime.strptime(i["date_time"], "%Y-%m-%d")).date()
 
-    steps_data[date] = {"num": steps_total, "dis": steps_distance}
+    steps_data[str(date)] = {"num": steps_total, "dis": steps_distance}
     print(f"\n{date}")
     print(f"{steps_total} steps")
     print(f"{steps_distance} m")
 
 print("\ngot steps data")
 print(steps_data)
+
+# saving data to json
+with open(jsonFile, "w") as f:
+    json.dump(steps_data, f, indent=4)
+print(f"saved steps data to {jsonFile}")
