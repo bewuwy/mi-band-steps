@@ -51,6 +51,31 @@ elif not exists(f"exports/{year}"):
 fig.write_html(f"exports/{year}/{month}.html")
 print(f"exported monthly line chart to exports/{year}/{month}.html")
 
+# calculate month average
+average_num = [0, 0]
+average_dis = [0, 0]
+for i in this_month.values():
+    if MODE == "miFit":
+        if i["num"] is not None:
+            average_num[0] += i["num"]
+            average_num[1] += 1
+        if i["dis"] is not None:
+            average_dis[0] += i["dis"]
+            average_dis[1] += 1
+    elif MODE == "googleFit":
+        average_num[0] += i
+        average_num[1] += 1
+
+if average_num[1] != 0:
+    average_num = int(average_num[0]/average_num[1])
+if average_dis[1] != 0:
+    average_dis = int(average_dis[0]/average_dis[1])
+
+if MODE == "miFit":
+    this_month["average"] = {"num": average_num, "dis": average_dis}
+elif MODE == "googleFit":
+    this_month["average"] = average_num
+
 # export this month data to json
 if exists(f"exports/{year}/{month}.json"):
     with open(f"exports/{year}/{month}.json", "r") as f:
