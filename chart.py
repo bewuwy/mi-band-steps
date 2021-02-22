@@ -4,7 +4,6 @@ from sys import argv
 import plotly.graph_objects as go
 import subprocess
 from datetime import datetime
-from os import environ
 import json
 import googleFit
 import miFit
@@ -20,7 +19,7 @@ if MODE == "googleFit":
 
     num_list = list(this_month.values())
 elif MODE == "miFit":
-    this_month = miFit.main(environ.get("MI_EMAIL"), environ.get("MI_PASS"))
+    this_month = miFit.main()
 
     for i in this_month.values():
         num_list.append(i["num"])

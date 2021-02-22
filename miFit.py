@@ -5,69 +5,88 @@ import datetime
 import time
 import base64
 import json
+import pickle
 
 
-def main(email, password):
+def main():
     # get access token
-    body = {"state": "REDIRECTION",
-            "client_id": "HuaMi",
-            "redirect_uri": "https://s3-us-west-2.amazonaws.com/hm-registration/successsignin.html",
-            "token": "access",
-            "password": password}
 
-    r = f"https://api-user.huami.com/registrations/{email}/tokens"
-    r = requests.post(r, data=body, allow_redirects=False)
+    if not exists("token/mi-fit.pickle"):
+        print("="*20)
+        print("Mi Fit Authorization")
+        print("=" * 20)
 
-    r_location = r.headers.get("Location")
-    if r_location is None:
-        print("unknown mifit api error!")
-        print("quitting!")
-        print(r.headers)
-        quit(1)
+        email = input("Your Mi Fit email: ")
+        password = input("Your Mi Fit password: ")
 
-    r = r_location.split("?")[1].split("&")
+        body = {"state": "REDIRECTION",
+                "client_id": "HuaMi",
+                "redirect_uri": "https://s3-us-west-2.amazonaws.com/hm-registration/successsignin.html",
+                "token": "access",
+                "password": password}
 
-    r_dict = {}
-    for i in r:
-        r_dict[i.split("=")[0]] = i.split("=")[1]
+        r = f"https://api-user.huami.com/registrations/{email}/tokens"
+        r = requests.post(r, data=body, allow_redirects=False)
 
-    if "error" in r_dict:
-        print(r_dict)
-        print("Error, wrong login credentials! Quitting")
-        quit(1)
+        r_location = r.headers.get("Location")
+        if r_location is None:
+            print("unknown mifit api error!")
+            print("quitting!")
+            print(r.headers)
+            quit(1)
 
-    access_token = r_dict["access"]
-    country_code = r_dict["country_code"]
-    print("got access token")
+        r = r_location.split("?")[1].split("&")
 
-    # get API credentials
-    body = {'app_name': 'com.xiaomi.hm.health',
-            'dn': 'account.huami.com,api-user.huami.com,api-watch.huami.com,api-analytics.huami.com,'
-                  'app-analytics.huami.com,api-mifit.huami.com',
-            'device_id': '02:00:00:00:00:00',
-            'device_model': 'android_phone',
-            'app_version': '4.9.0',
-            'allow_registration': 'false',
-            'third_name': 'huami',
-            'grant_type': 'access_token',
-            'country_code': country_code,
-            'code': access_token}
+        r_dict = {}
+        for i in r:
+            r_dict[i.split("=")[0]] = i.split("=")[1]
 
-    r = requests.post("https://account.huami.com/v2/client/login", data=body)
+        if "error" in r_dict:
+            print(r_dict)
+            print("Error, wrong login credentials! Quitting")
+            quit(1)
 
-    if r.status_code != 200:
-        print("Unable to get api credentials!")
-        print(r.content)
-        print(r.headers)
-        print(r)
-        print("Quitting!")
-        quit(1)
+        access_token = r_dict["access"]
+        country_code = r_dict["country_code"]
+        print("got access token from authorization")
 
-    r = r.json()
+        # get API credentials
+        body = {'app_name': 'com.xiaomi.hm.health',
+                'dn': 'account.huami.com,api-user.huami.com,api-watch.huami.com,api-analytics.huami.com,'
+                      'app-analytics.huami.com,api-mifit.huami.com',
+                'device_id': '02:00:00:00:00:00',
+                'device_model': 'android_phone',
+                'app_version': '4.9.0',
+                'allow_registration': 'false',
+                'third_name': 'huami',
+                'grant_type': 'access_token',
+                'country_code': country_code,
+                'code': access_token}
+
+        r = requests.post("https://account.huami.com/v2/client/login", data=body)
+
+        if r.status_code != 200:
+            print("Unable to get api credentials!")
+            print(r.content)
+            print(r.headers)
+            print(r)
+            print("Quitting!")
+            quit(1)
+
+        r = r.json()
+        print("got api credentials from authorization")
+
+        with open("token/mi-fit.pickle", "wb") as f:
+            pickle.dump(r, f)
+        print("saved token to file")
+    else:
+        with open("token/mi-fit.pickle", "rb") as f:
+            r = pickle.load(f)
+        print("loaded token from file")
+
     login_token = r["token_info"]["login_token"]
     app_token = r["token_info"]["app_token"]
     user_id = r["token_info"]["user_id"]
-    print("got api credentials")
 
     # get mi band data
     from_date = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
