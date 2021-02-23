@@ -11,8 +11,21 @@ import pickle
 def main():
     # get access token
 
-    if not exists("token/mi-fit.pickle"):
-        print("="*20)
+    access_token = None
+    country_code = None
+    if exists("token/mi-fit.pickle"):
+        with open("token/mi-fit.pickle", "rb") as f:
+            r_dict = pickle.load(f)
+
+        expiration = int(r_dict["expiration"])
+        if time.time() < expiration:
+            access_token = r_dict["access"]
+            country_code = r_dict["country_code"]
+            print("loaded access token from file")
+        else:
+            print("token expired")
+    if access_token is None or country_code is None:
+        print("=" * 20)
         print("Mi Fit Authorization")
         print("=" * 20)
 
@@ -50,41 +63,37 @@ def main():
         country_code = r_dict["country_code"]
         print("got access token from authorization")
 
-        # get API credentials
-        body = {'app_name': 'com.xiaomi.hm.health',
-                'dn': 'account.huami.com,api-user.huami.com,api-watch.huami.com,api-analytics.huami.com,'
-                      'app-analytics.huami.com,api-mifit.huami.com',
-                'device_id': '02:00:00:00:00:00',
-                'device_model': 'android_phone',
-                'app_version': '4.9.0',
-                'allow_registration': 'false',
-                'third_name': 'huami',
-                'grant_type': 'access_token',
-                'country_code': country_code,
-                'code': access_token}
-
-        r = requests.post("https://account.huami.com/v2/client/login", data=body)
-
-        if r.status_code != 200:
-            print("Unable to get api credentials!")
-            print(r.content)
-            print(r.headers)
-            print(r)
-            print("Quitting!")
-            quit(1)
-
-        r = r.json()
-        print("got api credentials from authorization")
-
         with open("token/mi-fit.pickle", "wb") as f:
-            pickle.dump(r, f)
-        print("saved token to file")
-    else:
-        with open("token/mi-fit.pickle", "rb") as f:
-            r = pickle.load(f)
-        print("loaded token from file")
+            pickle.dump(r_dict, f)
+        print("saved access token to file")
 
-    login_token = r["token_info"]["login_token"]
+    # get API credentials
+    body = {'app_name': 'com.xiaomi.hm.health',
+            'dn': 'account.huami.com,api-user.huami.com,api-watch.huami.com,api-analytics.huami.com,'
+                  'app-analytics.huami.com,api-mifit.huami.com',
+            'device_id': '02:00:00:00:00:00',
+            'device_model': 'android_phone',
+            'app_version': '4.9.0',
+            'allow_registration': 'false',
+            'third_name': 'huami',
+            'grant_type': 'access_token',
+            'country_code': country_code,
+            'code': access_token}
+
+    r = requests.post("https://account.huami.com/v2/client/login", data=body)
+
+    if r.status_code != 200:
+        print("Unable to get api credentials!")
+        print(r.content)
+        print(r.headers)
+        print(r)
+        print("Quitting!")
+        quit(1)
+
+    r = r.json()
+    print("got api credentials")
+
+    # login_token = r["token_info"]["login_token"]
     app_token = r["token_info"]["app_token"]
     user_id = r["token_info"]["user_id"]
 
