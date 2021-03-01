@@ -33,9 +33,9 @@ days_list = list(this_month.keys())
 
 # create monthly line chart
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=days_list, y=num_list, name="steps"))
+fig.add_trace(go.Scatter(x=days_list, y=num_list, name="steps", mode='lines+markers'))
 if dis_list:
-    fig.add_trace(go.Scatter(x=days_list, y=dis_list, name="meters"))
+    fig.add_trace(go.Scatter(x=days_list, y=dis_list, name="meters", mode='lines+markers'))
 fig.update_layout(title="daily steps", xaxis_title="day", template="plotly_dark")
 
 year = str(datetime.now().year)
@@ -89,6 +89,7 @@ with open(f"exports/{year}/{month}.json", "w") as f:
 # push the pages repository
 if "--push" in argv or "-p" in argv or "--forcepush" in argv or "-fp" in argv:
     if this_month != this_month_old or "--forcepush" in argv or "-fp" in argv:
+        print()
         p = subprocess.Popen(["git", "add", "."], cwd="exports")
         p.wait()
         p.kill()
