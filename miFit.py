@@ -1,7 +1,7 @@
 import requests
 from os.path import exists
 from shutil import copy2
-import datetime
+from datetime import datetime, timedelta
 import time
 import base64
 import json
@@ -98,8 +98,8 @@ def main():
     user_id = r["token_info"]["user_id"]
 
     # get mi band data
-    from_date = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
-    to_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    from_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+    to_date = datetime.now().strftime("%Y-%m-%d")
     headers = {"apptoken": app_token}
     params = {'query_type': 'summary',
               'device_type': 'android_phone',
@@ -139,8 +139,8 @@ def main():
         print("no saved data found, using empty dict")
 
     # add year and month if not in steps data
-    year = str(datetime.datetime.now().year)
-    month = str(datetime.datetime.now().month)
+    year = str(datetime.now().year)
+    month = str(datetime.now().month)
 
     if year not in steps_data:
         steps_data[year] = {month: {}}
@@ -154,7 +154,7 @@ def main():
         steps = data["stp"]
         steps_total = steps["ttl"]
         steps_distance = steps["dis"]
-        date = (datetime.datetime.strptime(i["date_time"], "%Y-%m-%d")).date()
+        date = (datetime.strptime(i["date_time"], "%Y-%m-%d")).date()
         year = str(date.year)
         month = str(date.month)
         day = str(date.day)
