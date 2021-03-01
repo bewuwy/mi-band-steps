@@ -12,17 +12,21 @@ import miFit
 MODE = "miFit"
 dailyGoal = 8000
 
-this_month = {}
+month_data = {}
 num_list = []
 dis_list = []
+year = str(datetime.now().year)
+month = str(datetime.now().month)
 if MODE == "googleFit":
-    this_month = googleFit.main()
+    all_data = googleFit.main()
+    month_data = all_data[year][month]
 
-    num_list = list(this_month.values())
+    num_list = list(month_data.values())
 elif MODE == "miFit":
-    this_month = miFit.main()
+    all_data = miFit.main()
+    month_data = all_data[year][month]
 
-    for i in this_month.values():
+    for i in month_data.values():
         num_list.append(i["num"])
         dis_list.append(i["dis"])
 else:
@@ -30,7 +34,7 @@ else:
     print("modes: googleFit | miFit")
     quit(1)
 
-days_list = list(this_month.keys())
+days_list = list(month_data.keys())
 
 # create monthly line chart
 fig = go.Figure()
@@ -45,9 +49,6 @@ fig.add_trace(go.Scatter(x=days_list, y=dailyGoalList, name="daily goal", mode="
 
 fig.update_layout(title="daily steps", xaxis_title="day", template="plotly_dark")
 
-year = str(datetime.now().year)
-month = str(datetime.now().month)
-
 if not exists("exports"):
     mkdir("exports")
     mkdir(f"exports/{year}")
@@ -60,7 +61,7 @@ print(f"exported monthly line chart to exports/{year}/{month}.html")
 # calculate month average
 average_num = [0, 0]
 average_dis = [0, 0]
-for i in this_month.values():
+for i in month_data.values():
     if MODE == "miFit":
         if i["num"] is not None:
             average_num[0] += i["num"]
@@ -78,24 +79,24 @@ if average_dis[1] != 0:
     average_dis = int(average_dis[0]/average_dis[1])
 
 if MODE == "miFit":
-    this_month["average"] = {"num": average_num, "dis": average_dis}
+    month_data["average"] = {"num": average_num, "dis": average_dis}
 elif MODE == "googleFit":
-    this_month["average"] = average_num
+    month_data["average"] = average_num
 
 # export this month data to json
 if exists(f"exports/{year}/{month}.json"):
     with open(f"exports/{year}/{month}.json", "r") as f:
-        this_month_old = dict(json.load(f))
+        month_data_old = dict(json.load(f))
 else:
-    this_month_old = {}
+    month_data_old = {}
 
 with open(f"exports/{year}/{month}.json", "w") as f:
-    json.dump(this_month, f, indent=4)
+    json.dump(month_data, f, indent=4)
     print(f"exported this month data to exports/{year}/{month}.json")
 
 # push the pages repository
 if "--push" in argv or "-p" in argv or "--forcepush" in argv or "-fp" in argv:
-    if this_month != this_month_old or "--forcepush" in argv or "-fp" in argv:
+    if month_data != month_data_old or "--forcepush" in argv or "-fp" in argv:
         print()
         p = subprocess.Popen(["git", "add", "."], cwd="exports")
         p.wait()

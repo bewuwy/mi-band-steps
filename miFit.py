@@ -172,5 +172,4 @@ def main():
         json.dump(steps_data, f, indent=4)
     print(f"saved steps data to {jsonFile}")
 
-    this_month = steps_data[str(datetime.datetime.now().year)][str(datetime.datetime.now().month)]
-    return this_month
+    return steps_data

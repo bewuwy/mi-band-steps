@@ -111,4 +111,4 @@ def main():
         json.dump(steps_data, f, indent=4)
     print("saved new data to file")
 
-    return this_month
+    return steps_data
