@@ -10,6 +10,7 @@ import miFit
 
 
 MODE = "miFit"
+dailyGoal = 8000
 
 this_month = {}
 num_list = []
@@ -36,6 +37,12 @@ fig = go.Figure()
 fig.add_trace(go.Scatter(x=days_list, y=num_list, name="steps", mode='lines+markers'))
 if dis_list:
     fig.add_trace(go.Scatter(x=days_list, y=dis_list, name="meters", mode='lines+markers'))
+
+dailyGoalList = []
+for i in days_list:
+    dailyGoalList.append(dailyGoal)
+fig.add_trace(go.Scatter(x=days_list, y=dailyGoalList, name="daily goal", mode="lines", line={"dash": "dash"}))
+
 fig.update_layout(title="daily steps", xaxis_title="day", template="plotly_dark")
 
 year = str(datetime.now().year)
@@ -103,4 +110,4 @@ if "--push" in argv or "-p" in argv or "--forcepush" in argv or "-fp" in argv:
         p.kill()
         print("\npushed pages repo")
     else:
-        print("no differences, skipping pages push")
+        print("\nno differences, skipping pages push")
