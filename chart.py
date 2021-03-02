@@ -24,28 +24,6 @@ for i in month_data.values():
 
 days_list = list(month_data.keys())
 
-# create monthly line chart
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=days_list, y=num_list, name="steps", mode='lines+markers'))
-if dis_list:
-    fig.add_trace(go.Scatter(x=days_list, y=dis_list, name="meters", mode='lines+markers'))
-
-dailyGoalList = []
-for i in days_list:
-    dailyGoalList.append(dailyGoal)
-fig.add_trace(go.Scatter(x=days_list, y=dailyGoalList, name="daily goal", mode="lines", line={"dash": "dash"}))
-
-fig.update_layout(title="daily steps", xaxis_title="day", template="plotly_dark")
-
-if not exists("exports"):
-    mkdir("exports")
-    mkdir(f"exports/{year}")
-elif not exists(f"exports/{year}"):
-    mkdir(f"exports/{year}")
-
-fig.write_html(f"exports/{year}/{month}.html")
-print(f"exported monthly line chart to exports/{year}/{month}.html")
-
 # calculate month average
 average_num = [0, 0]
 average_dis = [0, 0]
@@ -63,6 +41,34 @@ if average_dis[1] != 0:
     average_dis = int(average_dis[0]/average_dis[1])
 
 month_data["average"] = {"num": average_num, "dis": average_dis}
+
+# create monthly line chart
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=days_list, y=num_list, name="steps", mode='lines+markers'))
+fig.add_trace(go.Scatter(x=days_list, y=dis_list, name="meters", mode='lines+markers'))
+
+averageNumList = []
+averageDisList = []
+dailyGoalList = []
+for i in days_list:
+    dailyGoalList.append(dailyGoal)
+    averageNumList.append(average_num)
+    averageDisList.append(average_dis)
+
+fig.add_trace(go.Scatter(x=days_list, y=dailyGoalList, name="daily goal", mode="lines", line={"dash": "dash"}))
+fig.add_trace(go.Scatter(x=days_list, y=averageNumList, name="average steps", mode="lines", line={"dash": "dash"}))
+fig.add_trace(go.Scatter(x=days_list, y=averageDisList, name="average meters", mode="lines", line={"dash": "dash"}))
+
+fig.update_layout(title="daily steps", xaxis_title="day", template="plotly_dark")
+
+if not exists("exports"):
+    mkdir("exports")
+    mkdir(f"exports/{year}")
+elif not exists(f"exports/{year}"):
+    mkdir(f"exports/{year}")
+
+fig.write_html(f"exports/{year}/{month}.html")
+print(f"exported monthly line chart to exports/{year}/{month}.html")
 
 # export this month data to json
 if exists(f"exports/{year}/{month}.json"):
