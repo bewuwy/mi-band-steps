@@ -5,34 +5,22 @@ import plotly.graph_objects as go
 import subprocess
 from datetime import datetime
 import json
-import googleFit
 import miFit
 
 
-MODE = "miFit"
 dailyGoal = 8000
 
-month_data = {}
 num_list = []
 dis_list = []
 year = str(datetime.now().year)
 month = str(datetime.now().month)
-if MODE == "googleFit":
-    all_data = googleFit.main()
-    month_data = all_data[year][month]
 
-    num_list = list(month_data.values())
-elif MODE == "miFit":
-    all_data = miFit.main()
-    month_data = all_data[year][month]
+all_data = miFit.main()
+month_data = all_data[year][month]
 
-    for i in month_data.values():
-        num_list.append(i["num"])
-        dis_list.append(i["dis"])
-else:
-    print("wrong mode! quitting!")
-    print("modes: googleFit | miFit")
-    quit(1)
+for i in month_data.values():
+    num_list.append(i["num"])
+    dis_list.append(i["dis"])
 
 days_list = list(month_data.keys())
 
@@ -62,26 +50,19 @@ print(f"exported monthly line chart to exports/{year}/{month}.html")
 average_num = [0, 0]
 average_dis = [0, 0]
 for i in month_data.values():
-    if MODE == "miFit":
-        if i["num"] is not None:
-            average_num[0] += i["num"]
-            average_num[1] += 1
-        if i["dis"] is not None:
-            average_dis[0] += i["dis"]
-            average_dis[1] += 1
-    elif MODE == "googleFit":
-        average_num[0] += i
+    if i["num"] is not None:
+        average_num[0] += i["num"]
         average_num[1] += 1
+    if i["dis"] is not None:
+        average_dis[0] += i["dis"]
+        average_dis[1] += 1
 
 if average_num[1] != 0:
     average_num = int(average_num[0]/average_num[1])
 if average_dis[1] != 0:
     average_dis = int(average_dis[0]/average_dis[1])
 
-if MODE == "miFit":
-    month_data["average"] = {"num": average_num, "dis": average_dis}
-elif MODE == "googleFit":
-    month_data["average"] = average_num
+month_data["average"] = {"num": average_num, "dis": average_dis}
 
 # export this month data to json
 if exists(f"exports/{year}/{month}.json"):
