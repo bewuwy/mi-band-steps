@@ -154,12 +154,13 @@ def main():
         steps = data["stp"]
         steps_total = steps["ttl"]
         steps_distance = steps["dis"]
+        goal = data["goal"]
         date = (datetime.strptime(i["date_time"], "%Y-%m-%d")).date()
         year = str(date.year)
         month = str(date.month)
         day = str(date.day)
 
-        steps_data[year][month][day] = {"num": steps_total, "dis": steps_distance}
+        steps_data[year][month][day] = {"num": steps_total, "dis": steps_distance, "goal": goal}
         print(f"\n{date}")
         print(f"{steps_total} steps")
         print(f"{steps_distance} m")

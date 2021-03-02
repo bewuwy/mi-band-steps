@@ -8,10 +8,9 @@ import json
 import miFit
 
 
-dailyGoal = 8000
-
 num_list = []
 dis_list = []
+dailyGoalList = []
 year = str(datetime.now().year)
 month = str(datetime.now().month)
 
@@ -21,6 +20,7 @@ month_data = all_data[year][month]
 for i in month_data.values():
     num_list.append(i["num"])
     dis_list.append(i["dis"])
+    dailyGoalList.append(i["goal"])
 
 days_list = list(month_data.keys())
 
@@ -28,10 +28,10 @@ days_list = list(month_data.keys())
 average_num = [0, 0]
 average_dis = [0, 0]
 for i in month_data.values():
-    if i["num"] is not None:
+    if i.get("num") is not None:
         average_num[0] += i["num"]
         average_num[1] += 1
-    if i["dis"] is not None:
+    if i.get("dis") is not None:
         average_dis[0] += i["dis"]
         average_dis[1] += 1
 
@@ -49,9 +49,7 @@ fig.add_trace(go.Scatter(x=days_list, y=dis_list, name="meters", mode='lines+mar
 
 averageNumList = []
 averageDisList = []
-dailyGoalList = []
 for i in days_list:
-    dailyGoalList.append(dailyGoal)
     averageNumList.append(average_num)
     averageDisList.append(average_dis)
 
